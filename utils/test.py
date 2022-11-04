@@ -53,7 +53,7 @@ class Operator():
                 self.disentangled_num_scales = [2]
             elif candidate['graph'] == 'dis4':
                 self.disentangled_num_scales = [4]
-            elif candidate['graph'] == 'dis4+2':
+            elif candidate['graph'] == 'dis42':
                 self.labeling_mode += ['disentangled']
                 self.disentangled_num_scales = [4, 2]
         self.graph_input = graph.Graph(strategy=self.labeling_mode[0], body_parts=self.hyperparameters['graph']['body_parts'], neighbor_link=self.hyperparameters['graph']['neighbor_link'], center=self.hyperparameters['graph']['center'], bone_conns=self.hyperparameters['graph']['bone_conns'], thorax_index=self.hyperparameters['graph']['thorax_index'], pelvis_index=self.hyperparameters['graph']['pelvis_index'], disentangled_num_scales=self.disentangled_num_scales[0], use_mask=self.hyperparameters['graph']['use_mask'])
