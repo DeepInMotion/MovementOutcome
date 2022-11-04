@@ -286,36 +286,32 @@ def predict(coords_dir, coords_path):
         # Initialize model
         
         # Determine model architecture
-        input_width = candidate['input_width']
-        num_input_modules = candidate['num_input_modules']
+        input_width = int(candidate['input_width'])
+        num_input_modules = int(candidate['num_input_modules'])
         initial_block_type = candidate['initial_block_type']
         initial_residual = candidate['initial_residual']
-        num_input_modules = candidate['num_input_modules']
-        num_input_modules = candidate['num_input_modules']
-        num_input_modules = candidate['num_input_modules']
         if candidate['input_temporal_scales'] == 'linear':
             input_temporal_scales = [i for i in range(1,num_input_modules+1)]
         else:
             input_temporal_scales = [int(candidate['input_temporal_scales']) for i in range(num_input_modules)]
-        initial_main_width = candidate['initial_main_width']
-        num_main_levels = candidate['num_main_levels']
-        num_main_level_modules = candidate['num_main_level_modules']
+        initial_main_width = int(candidate['initial_main_width'])
+        num_main_levels = int(candidate['num_main_levels'])
+        num_main_level_modules = int(candidate['num_main_level_modules'])
         block_type = candidate['block_type']
-        bottleneck_factor = candidate['bottleneck_factor']
+        bottleneck_factor = int(candidate['bottleneck_factor'])
         residual = candidate['residual']
-        main_temporal_scales = candidate['bottleneck_factor']
         if candidate['main_temporal_scales'] == 'linear':
             main_temporal_scales = [i for i in range(1,num_main_levels+1)]
         else:
             main_temporal_scales = [int(candidate['main_temporal_scales']) for i in range(num_main_levels)]
-        temporal_kernel_size = candidate['temporal_kernel_size']
+        temporal_kernel_size = int(candidate['temporal_kernel_size'])
         se_outer = False
         se_inner = False
         if candidate['se'] in ['inner', 'both']:
             se_inner = True
         if candidate['se'] in ['outer', 'both']:
             se_outer = True
-        se_ratio = candidate['se_ratio']
+        se_ratio = int(candidate['se_ratio'])
         relative_se = True if candidate['se_type'] == 'relative' else False
         swish_nonlinearity = True if candidate['nonlinearity'] == 'swish' else False
         attention = candidate['attention']
