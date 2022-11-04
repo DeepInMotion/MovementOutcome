@@ -78,7 +78,6 @@ class Operator():
         self.block_type = candidate['block_type']
         self.bottleneck_factor = int(candidate['bottleneck_factor'])
         self.residual = candidate['residual']
-        self.main_temporal_scales = candidate['bottleneck_factor']
         if candidate['main_temporal_scales'] == 'linear':
             self.main_temporal_scales = [i for i in range(1,self.num_main_levels+1)]
         else:
