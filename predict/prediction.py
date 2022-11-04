@@ -267,7 +267,7 @@ def predict(coords_dir, coords_path):
                 disentangled_num_scales = [2]
             elif candidate['graph'] == 'dis4':
                 disentangled_num_scales = [4]
-            elif candidate['graph'] == 'dis4+2':
+            elif candidate['graph'] == 'dis42':
                 labeling_mode += ['disentangled']
                 disentangled_num_scales = [4, 2]
         graph_input = graph.Graph(strategy=labeling_mode[0], body_parts=body_parts, neighbor_link=neighbor_link, center=center, bone_conns=bone_conns, thorax_index=thorax_index, pelvis_index=pelvis_index, disentangled_num_scales=disentangled_num_scales[0], use_mask=use_mask)
