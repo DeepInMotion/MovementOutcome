@@ -56,9 +56,10 @@ if __name__ ==  '__main__':
     bone = True # <-- Assign [True, False] 
     bone_angle = False # <-- Assign [True, False]
 
-    #### Step 8: Set frames per second of coordinate files and median filter stride for preprocessing.
+    #### Step 8: Set frames per second of coordinate files and Butterworth filter options for preprocessing.
     frames_per_second = 30.0 # <-- Assign (i.e., assumes consistent frame rate across coordinate files)
-    filter_stride = 2 # <-- Assign stride of median filter for temporal smoothing of coordinates.
+    butterworth = False # <-- Assign [True, False] for Butterworth filter as part of preprocessing
+    butterworth_order = 8 # <-- Assign order of Butterworth filter
 
     #### Step 9: Set hyperparameters for training and validation (e.g., mini batch size and loss filter size)
     trainval_batch_size = 32 
@@ -199,7 +200,8 @@ if __name__ ==  '__main__':
                                 'bone': bone,
                                 'bone_angle': bone_angle},
                       'preprocessing': {'frames_per_second': frames_per_second,
-                                'filter_stride': filter_stride},
+                                'butterworth': butterworth,
+                                'butterworth_order', butterworth_order},
                       'trainval': {'trainval_batch_size': trainval_batch_size,
                                 'loss_filter_size': loss_filter_size}, 
                       'balance': {'train_num_positive_samples_per_negative_sample': train_num_positive_samples_per_negative_sample,
@@ -260,7 +262,7 @@ if __name__ ==  '__main__':
     """ Initialize data """
 
     # Process coordinate files and outcomes (assuming raw folder exists with one coordinate CSV and associated row in outcome CSV per individual)
-    process.process(project_dir, processed_data_dir, test_size=test_size, crossval_folds=crossval_folds, num_dimensions=input_dimensions, num_joints=input_spatial_resolution, filter_stride=filter_stride)
+    process.process(project_dir, processed_data_dir, test_size=test_size, crossval_folds=crossval_folds, num_dimensions=input_dimensions, num_joints=input_spatial_resolution, thorax_index=thorax_index, pelvis_index=pelvis_index, butterworth=butterworth, butterworth_order=butterworth_order)
 
 
     """ Neural architecture search """

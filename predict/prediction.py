@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 import torch.backends.cudnn as cudnn
 import numpy as np
 import random
+from scipy import signal
 
 
 def init_seed(seed=1):
@@ -154,10 +155,11 @@ def predict(coords_dir, coords_path):
     motion2 = False # <-- Assign [True, False]
     bone = True # <-- Assign [True, False] 
     bone_angle = False # <-- Assign [True, False]
-
-    #### Step 8: Set frames per second of coordinate files and median filter stride for preprocessing.
+    
+    #### Step 8: Set frames per second of coordinate files and Butterworth filter options for preprocessing.
     frames_per_second = 30.0 # <-- Assign (i.e., assumes consistent frame rate across coordinate files)
-    filter_stride = 2 # <-- Assign stride of median filter for temporal smoothing of coordinates.
+    butterworth = True#False # <-- Assign [True, False] for Butterworth filter as part of preprocessing
+    butterworth_order = 8 # <-- Assign order of Butterworth filter
     
     #### Step 10: Set evaluation options (e.g., mini batch size, number of frames between each sample, and aggregation scheme)
     evaluation_batch_size = 32
@@ -183,7 +185,6 @@ def predict(coords_dir, coords_path):
 
     # Local dependencies
     m = __import__(model_script, fromlist=['object'])
-    from utils.helpers import median_filter, coords_raw_to_norm
     from utils import graph
     
 
@@ -196,28 +197,7 @@ def predict(coords_dir, coords_path):
     
     """ Obtain skeleton sequence """
         
-    # Calculate median trunk length and median pelvis (assumes body keypoints of thorax and pelvis exist)
-    trunk_lengths = []
-    pelvis_xs = []
-    pelvis_ys = []
-    frames = {}
-    with open(os.path.join(coords_path), newline='') as individual_file:
-        individual_reader = csv.reader(individual_file, delimiter=',', quotechar='|')
-        header = next(individual_reader)
-        for row in individual_reader:
-            if len(row) > 0:
-                frames[int(row[0])] = np.swapaxes(np.asarray([[row[body_part_index], row[body_part_index+1]] for body_part_index in range(1, len(row), 2)], dtype=np.float32), 0, 1)
-                thorax_x = float(row[header.index('thorax_x')])
-                thorax_y = float(row[header.index('thorax_y')])
-                pelvis_x = float(row[header.index('pelvis_x')])
-                pelvis_y = float(row[header.index('pelvis_y')])
-                trunk_length = math.sqrt((thorax_x - pelvis_x)**2 + (thorax_y - pelvis_y)**2)
-                trunk_lengths.append(trunk_length)
-                pelvis_xs.append(pelvis_x)
-                pelvis_ys.append(pelvis_y)            
-    median_trunk_length = np.median(trunk_lengths)
-    median_pelvis_x = np.median(pelvis_xs)
-    median_pelvis_y = np.median(pelvis_ys)
+    """ UPDATE
 
     # Filter, centralize and normalize coordinates 
     num_frames = len(trunk_lengths)
@@ -230,6 +210,82 @@ def predict(coords_dir, coords_path):
         # Centralize and normalize
         norm_frame_coords = coords_raw_to_norm(filter_frame_coords, median_pelvis_x, median_pelvis_y, median_trunk_length)
         individual_sequence[0, :, frame-1, :] = norm_frame_coords
+    """
+    # Generate processed skeleton sequences
+    csv_file = open(os.path.join(coords_path), 'r')
+    reader = csv.DictReader(csv_file)
+    org_coords = []
+    for row in reader:
+        frame_coords = []
+        for body_part_col in row.keys():
+            if not body_part_col == 'frame' and body_part_col.endswith('_x'):
+                body_part_x = row[body_part_col]
+                body_part_y = row[body_part_col[:-2] + "_y"]
+                frame_coords.append([body_part_x, body_part_y])
+        org_coords.append(frame_coords)
+    org_coords = np.array(org_coords, dtype='float64')
+
+    # Apply Butterworth 8th-order zero-lag IIR filter (backward-forward filter): One of the most used filters in movement analysis
+    T, V, C = org_coords.shape
+    if butterworth:
+        x_filt = [] 
+        sos = signal.butter(butterworth_order, 0.5, output='sos')
+        for n in range(V):
+            x_filt0 = []
+            for nn in range(C):
+                x_org = org_coords[:,n,nn]
+                filt = signal.sosfiltfilt(sos, x_org)
+                x_filt0.append(filt)
+            x_filt.append(np.asarray(x_filt0))
+        x_filt = np.asarray(x_filt)
+    else:
+        x_filt = np.swapaxes(np.swapaxes(org_coords, 0, 2), 0, 1)
+
+    # Reverse y dimension
+    x_filt[:,1,:] *= -1
+
+    # Frame-level trunk centralization and alignment
+    x_stand = []
+    trunks = []
+    trunk_lengths = []
+    num_trunk_lengths = 2
+    for t in range(T):
+
+        # Trunk information
+        thorax = np.asarray([x_filt[thorax_index,0,t], x_filt[thorax_index,1,t]])
+        pelvis = np.asarray([x_filt[pelvis_index,0,t], x_filt[pelvis_index,1,t]])
+        trunk = np.asarray(pelvis + (thorax - pelvis)/2)
+        trunk_length = math.sqrt((thorax[0] - pelvis[0])**2 + (thorax[1] - pelvis[1])**2)
+
+        # Rotation matrix
+        hyp = np.sqrt(np.sum(np.power(trunk - thorax,2)))
+        y_side = thorax[0] - trunk[0]
+        x_side = thorax[1] - trunk[1]
+        cos_theta = x_side/hyp
+        sin_theta = y_side/hyp
+        rot_mat = [[cos_theta, -sin_theta], [sin_theta, cos_theta]]
+
+        # Centralize and align
+        marker_rot = []
+        for n in range(V):
+            marker = x_filt[n,:,t]
+            rel_marker = marker - trunk 
+            rot_rel_marker = np.matmul(rot_mat, rel_marker) 
+            marker_rot.append(rot_rel_marker)
+        x_stand.append(np.asarray(marker_rot))
+
+        trunks.append(trunk)
+        trunk_lengths.append(trunk_length)
+    trunks = np.asarray(trunks)
+    trunk_lengths = np.asarray(trunk_lengths)
+
+    # Sequence-level scale normalization
+    median_trunk_length = np.median(trunk_lengths)
+    x_stand = np.asarray(x_stand)
+    x_stand /= (2 * num_trunk_lengths * median_trunk_length)
+
+    # Reorder axes
+    individual_sequence = np.expand_dims(np.swapaxes(np.swapaxes(x_stand, 0, 2), 1, 2), axis=0)
 
     
     """ Obtain architecture of best performing candidate from K-Best Search """

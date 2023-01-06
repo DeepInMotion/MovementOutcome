@@ -1,39 +1,6 @@
 import numpy as np
 import math
 import random
-import pickle
-
-
-def median_filter(frames, frame, num_frames, window_stride):
-    
-    # Ensure valid stride
-    stride = window_stride if frame > window_stride else frame - 1
-    stride = stride if frame + stride <= num_frames else num_frames - frame
-    
-    # Obtain window coords
-    window_coords = np.zeros((frames[frame].shape[0], frames[frame].shape[1], 2 * stride + 1), dtype=frames[frame].dtype)
-    for i, frame_index in enumerate(range(frame - stride, frame + stride + 1)):
-        raw_coords = frames[frame_index]
-        window_coords[:,:,i] = raw_coords
-    filter_coords = np.median(window_coords, axis=2)
-    
-    return filter_coords
-
-
-def coords_raw_to_norm(raw_coords, median_pelvis_x, median_pelvis_y, median_trunk_length, num_trunk_lengths=2):
-        
-    # Centralize with regards to median pelvis position
-    centralized_coords = raw_coords
-    centralized_coords[0,:] -= median_pelvis_x
-    centralized_coords[1,:] -= median_pelvis_y
-
-    # Normalize with regards to median trunk length
-    norm_coords = centralized_coords / (2 * num_trunk_lengths * median_trunk_length)
-    
-    # Reverse y direction
-    norm_coords[1,:] = -norm_coords[1,:]
-    
-    return norm_coords
 
 
 def random_start(sample_data, window_size, roll_sequence=False, sequence_part=1, num_sequence_parts=1):
