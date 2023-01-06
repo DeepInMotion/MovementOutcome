@@ -158,7 +158,7 @@ def predict(coords_dir, coords_path):
     
     #### Step 8: Set frames per second of coordinate files and Butterworth filter options for preprocessing.
     frames_per_second = 30.0 # <-- Assign (i.e., assumes consistent frame rate across coordinate files)
-    butterworth = True#False # <-- Assign [True, False] for Butterworth filter as part of preprocessing
+    butterworth = False # <-- Assign [True, False] for Butterworth filter as part of preprocessing
     butterworth_order = 8 # <-- Assign order of Butterworth filter
     
     #### Step 10: Set evaluation options (e.g., mini batch size, number of frames between each sample, and aggregation scheme)

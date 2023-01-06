@@ -50,13 +50,13 @@ This is a step by step procedure for how to use the MovementOutcome framework to
 - Line 38-40: Set additional fixed hyperparameters of a GCN.
 - Line 43-48: Define the human skeleton (e.g., body parts, neighboring body parts, and center of skeleton).
 - Line 52-57: Set biomechanical properties to use as input for GCN.
-- Line 60-61: Set temporal resolution of coordinate files (e.g., `frames_per_second = 30.0`) and stride of median filter used for temporal smoothing of coordinates (e.g., `filter_stride = 2`).
-- Line 64-65: Set batch size for training and validation (e.g., `trainval_batch_size = 32`) and number of epochs taken into account for computing smoothed validation loss (e.g., `loss_filter_size = 5`).
-- Line 68: Set number of positive samples required per negative sample (i.e., `train_num_positive_samples_per_negative_sample`) to compensate for unbalanced datasets. Should ideally be set to number of individuals with negative outcome divided by number of individuals with positive outcome.
-- Line 73-90: Adjust hyperparameters of the optimizer and data augmentation if desired. However, we suggest using the default values as a starting point as they have worked well across a wide variety of GCNs.
-- Line 93-100: Set preferences for the evaluation process, including portion of individuals in the test set (i.e., `test_size`), distance between subsequent movement windows (e.g., `parts_distance = 75` for 50% overlapping windows with `input_temporal_resolution = 150`), scheme for aggregating predictions across movement windows, and prediction threshold for classifying an individual as positive outcome (e.g., `prediction_threshold = 0.5`).  
-- Line 103-136: Specify the details of the NAS, including hyperparameters of the K-Best Search strategy (e.g., `k` and `performance_threshold`), choices and associated alternatives in the search space (i.e., `search_space`), training and validation sets of the search (i.e., `search_train_dataset` and `search_val_dataset`), number of epochs (`search_num_epochs`), and performance requirements per epoch (i.e., `search_critical_epochs` and `search_critical_epoch_values`).
-- Line 139-146: Specify the details for cross-validation, including number of validation folds (i.e., `crossval_folds`) and number of epochs for each cross-validation run (i.e., `crossval_num_epochs`).    
+- Line 60-62: Set temporal resolution of coordinate files (e.g., `frames_per_second = 30.0`) and options for preprocessing skeleton sequences with Butterworth filter.
+- Line 65-66: Set batch size for training and validation (e.g., `trainval_batch_size = 32`) and number of epochs taken into account for computing smoothed validation loss (e.g., `loss_filter_size = 5`).
+- Line 69: Set number of positive samples required per negative sample (i.e., `train_num_positive_samples_per_negative_sample`) to compensate for unbalanced datasets. Should ideally be set to number of individuals with negative outcome divided by number of individuals with positive outcome.
+- Line 74-91: Adjust hyperparameters of the optimizer and data augmentation if desired. However, we suggest using the default values as a starting point as they have worked well across a wide variety of GCNs.
+- Line 94-101: Set preferences for the evaluation process, including portion of individuals in the test set (i.e., `test_size`), distance between subsequent movement windows (e.g., `parts_distance = 75` for 50% overlapping windows with `input_temporal_resolution = 150`), scheme for aggregating predictions across movement windows, and prediction threshold for classifying an individual as positive outcome (e.g., `prediction_threshold = 0.5`).  
+- Line 104-137: Specify the details of the NAS, including hyperparameters of the K-Best Search strategy (e.g., `k` and `performance_threshold`), choices and associated alternatives in the search space (i.e., `search_space`), training and validation sets of the search (i.e., `search_train_dataset` and `search_val_dataset`), number of epochs (`search_num_epochs`), and performance requirements per epoch (i.e., `search_critical_epochs` and `search_critical_epoch_values`).
+- Line 140-147: Specify the details for cross-validation, including number of validation folds (i.e., `crossval_folds`) and number of epochs for each cross-validation run (i.e., `crossval_num_epochs`).    
 9. Save *'main.py'* (with the chosen hyperparameter setting).
 10. Open a new terminal window from the jupyter lab tab in the web browser.
 11. Run NAS, cross-validation and/or evaluation in the terminal window: **python main.py**
@@ -66,22 +66,22 @@ This is a step by step procedure for how to use the MovementOutcome framework to
 
 To employ a cross-validated GCN obtained by NAS for prediction of movement outcome from raw coordinate files we suggest the following steps:
 1. Set search details in prediction script (i.e., *'predict/prediction.py'*):
-- Line 111: Set name of your project folder (e.g., *'im2021'*).
-- Line 121: Set name of the search used to obtain the GCN (e.g., *'21092022 1522 IM2021'*).
-- Line 124: Set `save = True` if you want to save predicted risk of outcome, classification and associated certainty in CSV file, otherwise set `save = False`.
-- Line 125: Set `visualize = True` if you want to store class activation map visualization of body parts with highest contribution towards predicted risk of outcome, otherwise set `visualize = False`.
-- Line 128: Define computational device responsible for the analysis (i.e., `output_device`) and number of workers responsible for data handling. 
-- Line 132: Set reference to model script for defining GCN (e.g., `model_script = 'models.gcn_search_model'` for script *'gcn_search_model.py'* in *'models'*).
-- Line 133: Set number of dimensions in coordinate files (e.g., `input_dimensions = 2` for 2D coordinates).
-- Line 134: Set number of body parts in coordinate files (e.g., `input_spatial_resolution = 19`).
-- Line 135: Set number of time steps in a movement window (e.g., `input_temporal_resolution = 150`).
-- Line 136-138: Set additional fixed hyperparameters of a GCN.
-- Line 141-146: Define the human skeleton (e.g., body parts, neighboring body parts, and center of skeleton).
-- Line 148: Set sample coordinates of human skeleton (i.e., `sample_coords`).
-- Line 151-156: Set biomechanical properties to use as input for GCN.
-- Line 159-160: Set temporal resolution of coordinate files (e.g., `frames_per_second = 30.0`) and stride of median filter used for temporal smoothing of coordinates (e.g., `filter_stride = 2`).
-- Line 163-168: Set hyperparameters for the evaluation process, including batch size (i.e., `evaluation_batch_size`), distance between subsequent movement windows (e.g., `parts_distance = 75` for 50% overlapping windows with `input_temporal_resolution = 150`), scheme for aggregating predictions across movement windows, and prediction threshold for classifying an individual as positive outcome (e.g., `prediction_threshold = 0.5`).
-- Line 171: Set the number of cross-validation folds (i.e., `crossval_folds`).
+- Line 112: Set name of your project folder (e.g., *'im2021'*).
+- Line 122: Set name of the search used to obtain the GCN (e.g., *'21092022 1522 IM2021'*).
+- Line 125: Set `save = True` if you want to save predicted risk of outcome, classification and associated certainty in CSV file, otherwise set `save = False`.
+- Line 126: Set `visualize = True` if you want to store class activation map visualization of body parts with highest contribution towards predicted risk of outcome, otherwise set `visualize = False`.
+- Line 129: Define computational device responsible for the analysis (i.e., `output_device`) and number of workers responsible for data handling. 
+- Line 133: Set reference to model script for defining GCN (e.g., `model_script = 'models.gcn_search_model'` for script *'gcn_search_model.py'* in *'models'*).
+- Line 134: Set number of dimensions in coordinate files (e.g., `input_dimensions = 2` for 2D coordinates).
+- Line 135: Set number of body parts in coordinate files (e.g., `input_spatial_resolution = 19`).
+- Line 136: Set number of time steps in a movement window (e.g., `input_temporal_resolution = 150`).
+- Line 137-139: Set additional fixed hyperparameters of a GCN.
+- Line 142-147: Define the human skeleton (e.g., body parts, neighboring body parts, and center of skeleton).
+- Line 149: Set sample coordinates of human skeleton (i.e., `sample_coords`).
+- Line 152-157: Set biomechanical properties to use as input for GCN.
+- Line 160-162: Set temporal resolution of coordinate files (e.g., `frames_per_second = 30.0`) and options for preprocessing skeleton sequences with Butterworth filter.
+- Line 165-170: Set hyperparameters for the evaluation process, including batch size (i.e., `evaluation_batch_size`), distance between subsequent movement windows (e.g., `parts_distance = 75` for 50% overlapping windows with `input_temporal_resolution = 150`), scheme for aggregating predictions across movement windows, and prediction threshold for classifying an individual as positive outcome (e.g., `prediction_threshold = 0.5`).
+- Line 173: Set the number of cross-validation folds (i.e., `crossval_folds`).
 2. Create a folder with coordinate files that should be analyzed by the prediction model (e.g., *'coords'*).
 4. Run the prediction script on the coordinate files in the created folder. E.g.: **python predict/prediction.py coords**
 5. The results of the prediction model are stored in a folder with the same name as the folder of the coordinate files in the specific search folder within *'searches'* (e.g., *'im2021/searches/21092022 1522 IM2021/coords'*).
