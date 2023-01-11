@@ -197,20 +197,6 @@ def predict(coords_dir, coords_path):
     
     """ Obtain skeleton sequence """
         
-    """ UPDATE
-
-    # Filter, centralize and normalize coordinates 
-    num_frames = len(trunk_lengths)
-    individual_sequence = np.zeros((1, input_dimensions, num_frames, input_spatial_resolution))
-    for frame in frames.keys():
-
-        # Apply median filter
-        filter_frame_coords = median_filter(frames, frame, num_frames, filter_stride)
-
-        # Centralize and normalize
-        norm_frame_coords = coords_raw_to_norm(filter_frame_coords, median_pelvis_x, median_pelvis_y, median_trunk_length)
-        individual_sequence[0, :, frame-1, :] = norm_frame_coords
-    """
     # Generate processed skeleton sequences
     csv_file = open(os.path.join(coords_path), 'r')
     reader = csv.DictReader(csv_file)
