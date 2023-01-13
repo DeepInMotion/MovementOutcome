@@ -120,7 +120,7 @@ def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, n
         for (individual_id, raw_dataset_dir, outcome) in tqdm(individual_dataset_outcomes):
             
             # Extract coordinates
-            csv_file = open(os.path.join(coords_path), 'r')
+            csv_file = open(os.path.join(raw_dataset_dir, outcome, individual_id + '.csv'), 'r')
             reader = csv.DictReader(csv_file)
             coords_arr = []
             for row in reader:

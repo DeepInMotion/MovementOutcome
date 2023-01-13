@@ -203,7 +203,7 @@ if __name__ ==  '__main__':
                       'preprocessing': {'raw_frames_per_second': raw_frames_per_second,
                                 'processed_frames_per_second': processed_frames_per_second,
                                 'butterworth': butterworth,
-                                'butterworth_order', butterworth_order},
+                                'butterworth_order': butterworth_order},
                       'trainval': {'trainval_batch_size': trainval_batch_size,
                                 'loss_filter_size': loss_filter_size}, 
                       'balance': {'train_num_positive_samples_per_negative_sample': train_num_positive_samples_per_negative_sample,
