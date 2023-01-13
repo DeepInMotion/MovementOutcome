@@ -81,7 +81,7 @@ def generate_datasets(raw_dir, raw_coords_dir, raw_outcomes_file, test_size, cro
     copy_coords_files(test_negative_individuals, raw_coords_dir, os.path.join(raw_dir, 'test', 'negative'))
     
     
-def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, thorax_index=8, pelvis_index=12, butterworth=False, butterworth_order=8):
+def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, thorax_index=8, pelvis_index=12, raw_frames_per_second=30.0, processed_frames_per_second=30.0, butterworth=False, butterworth_order=8):
     
     # Make skeleton sequences per dataset
     datasets = ['train{0}'.format(n) for n in range(1, crossval_folds+1)] + ['val{0}'.format(n) for n in range(1, crossval_folds+1)] + ['test']
@@ -120,48 +120,61 @@ def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, n
         for (individual_id, raw_dataset_dir, outcome) in tqdm(individual_dataset_outcomes):
             
             # Extract coordinates
-            csv_file = open(os.path.join(raw_dataset_dir, outcome, individual_id + '.csv'), 'r')
+            csv_file = open(os.path.join(coords_path), 'r')
             reader = csv.DictReader(csv_file)
-            org_coords = []
+            coords_arr = []
             for row in reader:
-                frame_coords = []
+                coords_frame = []
                 for body_part_col in row.keys():
                     if not body_part_col == 'frame' and body_part_col.endswith('_x'):
                         body_part_x = row[body_part_col]
                         body_part_y = row[body_part_col[:-2] + "_y"]
-                        frame_coords.append([body_part_x, body_part_y])
-                org_coords.append(frame_coords)
-            org_coords = np.array(org_coords, dtype='float64')
+                        coords_frame.append([body_part_x, body_part_y])
+                coords_arr.append(coords_frame)
+            coords = np.array(coords_arr, dtype='float64')
+            
+            # Resample skeleton sequence
+            T, V, C = coords.shape
+            if not raw_frames_per_second == processed_frames_per_second:
+                coords_arr = []
+                for n in range(V):
+                    coords_joint = []
+                    for nn in range(C):
+                        coords_channel = coords[:,n,nn]
+                        resampled = np.interp(np.arange(0, T, (raw_frames_per_second / processed_frames_per_second)), np.arange(0, T), coords_channel)
+                        coords_joint.append(resampled)
+                    coords_arr.append(np.asarray(coords_joint))
+                coords = np.swapaxes(np.swapaxes(coords_arr, 0, 2), 1, 2)
 
             # Apply Butterworth 8th-order zero-lag IIR filter (backward-forward filter): One of the most used filters in movement analysis
-            T, V, C = org_coords.shape
+            T, V, C = coords.shape
             if butterworth:
-                x_filt = [] 
+                coords_arr = [] 
                 sos = signal.butter(butterworth_order, 0.5, output='sos')
                 for n in range(V):
-                    x_filt0 = []
+                    coords_joint = []
                     for nn in range(C):
-                        x_org = org_coords[:,n,nn]
-                        filt = signal.sosfiltfilt(sos, x_org)
-                        x_filt0.append(filt)
-                    x_filt.append(np.asarray(x_filt0))
-                x_filt = np.asarray(x_filt)
+                        coords_channel = coords[:,n,nn]
+                        filt = signal.sosfiltfilt(sos, coords_channel)
+                        coords_joint.append(filt)
+                    coords_arr.append(np.asarray(coords_joint))
+                coords = np.asarray(coords_arr)
             else:
-                x_filt = np.swapaxes(np.swapaxes(org_coords, 0, 2), 0, 1)
-
+                coords = np.swapaxes(np.swapaxes(coords, 0, 2), 0, 1)
+                
             # Reverse y dimension
-            x_filt[:,1,:] *= -1
+            coords[:,1,:] *= -1
 
             # Frame-level trunk centralization and alignment
-            x_stand = []
+            coords_arr = []
             trunks = []
             trunk_lengths = []
             num_trunk_lengths = 2
             for t in range(T):
 
                 # Trunk information
-                thorax = np.asarray([x_filt[thorax_index,0,t], x_filt[thorax_index,1,t]])
-                pelvis = np.asarray([x_filt[pelvis_index,0,t], x_filt[pelvis_index,1,t]])
+                thorax = np.asarray([coords[thorax_index,0,t], coords[thorax_index,1,t]])
+                pelvis = np.asarray([coords[pelvis_index,0,t], coords[pelvis_index,1,t]])
                 trunk = np.asarray(pelvis + (thorax - pelvis)/2)
                 trunk_length = math.sqrt((thorax[0] - pelvis[0])**2 + (thorax[1] - pelvis[1])**2)
 
@@ -174,27 +187,27 @@ def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, n
                 rot_mat = [[cos_theta, -sin_theta], [sin_theta, cos_theta]]
 
                 # Centralize and align
-                marker_rot = []
+                coords_frame = []
                 for n in range(V):
-                    marker = x_filt[n,:,t]
+                    marker = coords[n,:,t]
                     rel_marker = marker - trunk 
                     rot_rel_marker = np.matmul(rot_mat, rel_marker) 
-                    marker_rot.append(rot_rel_marker)
-                x_stand.append(np.asarray(marker_rot))
+                    coords_frame.append(rot_rel_marker)
+                coords_arr.append(np.asarray(coords_frame))
 
                 trunks.append(trunk)
                 trunk_lengths.append(trunk_length)
+            coords = np.asarray(coords_arr)
             trunks = np.asarray(trunks)
-            trunk_lengths = np.asarray(trunk_lengths)
-
+            trunk_lengths = np.asarray(trunk_lengths)    
+            
             # Sequence-level scale normalization
             median_trunk_length = np.median(trunk_lengths)
-            x_stand = np.asarray(x_stand)
-            x_stand /= (2 * num_trunk_lengths * median_trunk_length)
+            coords /= (2 * num_trunk_lengths * median_trunk_length)
 
-            # Swap axes
-            individual_sequence = np.swapaxes(np.swapaxes(x_stand, 0, 2), 1, 2)
-            
+            # Reorder axes
+            individual_sequence = np.swapaxes(np.swapaxes(coords, 0, 2), 1, 2)
+
             sequences.append(individual_sequence)
                   
         # Determine maximum number of frames in skeleton sequence
@@ -226,7 +239,7 @@ def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, n
         np.save(labels_processed_path, np.asarray(individual_labels))
                         
             
-def process(project_dir, processed_data_dir, test_size, crossval_folds, num_dimensions, num_joints, thorax_index=8, pelvis_index=12, butterworth=False, butterworth_order=8):
+def process(project_dir, processed_data_dir, test_size, crossval_folds, num_dimensions, num_joints, thorax_index=8, pelvis_index=12, raw_frames_per_second=30.0, processed_frames_per_second=30.0, butterworth=False, butterworth_order=8):
     print('\n============================================================================================================================================\n')
     print('PROCESSING DATA\n')
     
@@ -248,6 +261,6 @@ def process(project_dir, processed_data_dir, test_size, crossval_folds, num_dime
         
         # Create processed skeleton sequences with associated ids and labels
         print('\n- Generating skeleton sequences with ids and labels')
-        perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, thorax_index, pelvis_index, butterworth, butterworth_order) 
+        perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, thorax_index, pelvis_index, raw_frames_per_second, processed_frames_per_second, butterworth, butterworth_order) 
         print('- Skeleton sequences generated')
         print('\n============================================================================================================================================\n')

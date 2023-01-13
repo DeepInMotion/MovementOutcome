@@ -56,8 +56,9 @@ if __name__ ==  '__main__':
     bone = True # <-- Assign [True, False] 
     bone_angle = False # <-- Assign [True, False]
 
-    #### Step 8: Set frames per second of coordinate files and Butterworth filter options for preprocessing.
-    frames_per_second = 30.0 # <-- Assign (i.e., assumes consistent frame rate across coordinate files)
+    #### Step 8: Set frames per second of raw coordinate files and processed skeleton sequences and Butterworth filter options for preprocessing.
+    raw_frames_per_second = 30.0 # <-- Assign (i.e., assumes consistent frame rate across coordinate files)
+    processed_frames_per_second = 30.0 # <-- Assign (i.e., number of time steps per second in skeleton sequences)
     butterworth = False # <-- Assign [True, False] for Butterworth filter as part of preprocessing
     butterworth_order = 8 # <-- Assign order of Butterworth filter
 
@@ -199,7 +200,8 @@ if __name__ ==  '__main__':
                                 'motion2': motion2,
                                 'bone': bone,
                                 'bone_angle': bone_angle},
-                      'preprocessing': {'frames_per_second': frames_per_second,
+                      'preprocessing': {'raw_frames_per_second': raw_frames_per_second,
+                                'processed_frames_per_second': processed_frames_per_second,
                                 'butterworth': butterworth,
                                 'butterworth_order', butterworth_order},
                       'trainval': {'trainval_batch_size': trainval_batch_size,
@@ -262,7 +264,7 @@ if __name__ ==  '__main__':
     """ Initialize data """
 
     # Process coordinate files and outcomes (assuming raw folder exists with one coordinate CSV and associated row in outcome CSV per individual)
-    process.process(project_dir, processed_data_dir, test_size=test_size, crossval_folds=crossval_folds, num_dimensions=input_dimensions, num_joints=input_spatial_resolution, thorax_index=thorax_index, pelvis_index=pelvis_index, butterworth=butterworth, butterworth_order=butterworth_order)
+    process.process(project_dir, processed_data_dir, test_size=test_size, crossval_folds=crossval_folds, num_dimensions=input_dimensions, num_joints=input_spatial_resolution, thorax_index=thorax_index, pelvis_index=pelvis_index, raw_frames_per_second=raw_frames_per_second, processed_frames_per_second=processed_frames_per_second, butterworth=butterworth, butterworth_order=butterworth_order)
 
 
     """ Neural architecture search """
