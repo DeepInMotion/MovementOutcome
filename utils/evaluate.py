@@ -12,7 +12,7 @@ def evaluate(preds, labels, video_ids, aggregate_binary=False, aggregate_binary_
         for i in range(preds.shape[0]):
             softmax[i,:] = np.exp(preds[i,:]) / np.sum(np.exp(preds[i,:]), axis=0)
                         
-    # Extract CP scores of sequence parts
+    # Extract scores of sequence parts
     parts_scores = softmax[:,1]
     
     # Sort predictions on video ID
@@ -30,7 +30,7 @@ def evaluate(preds, labels, video_ids, aggregate_binary=False, aggregate_binary_
         
     # Get accumulative scores
     accumulative_scores = []
-    cp_labels = []
+    outcome_labels = []
     sample_weights = []
     for video_id in video_ids_label.keys():
         label = video_ids_label[video_id]
@@ -52,7 +52,7 @@ def evaluate(preds, labels, video_ids, aggregate_binary=False, aggregate_binary_
                 accumulative_scores.append(1.0)
             else:
                 accumulative_scores.append(prediction_threshold)
-            cp_labels.append(label)
+            outcome_labels.append(label)
         else:
             for score in scores:
                 if score >= 0.0 and score <= 1.0:
@@ -63,15 +63,15 @@ def evaluate(preds, labels, video_ids, aggregate_binary=False, aggregate_binary_
                     accumulative_scores.append(1.0)
                 else:
                     accumulative_scores.append(prediction_threshold)
-            cp_labels += [label for i in range(len(scores))]
+            outcome_labels += [label for i in range(len(scores))]
             sample_weights += [(1/len(scores))/len(video_ids_label.keys()) for i in range(len(scores))]
            
     # Area Under ROC Curve
     if not np.any(np.isnan(accumulative_scores)):
         if subject:
-            area_under_curve = roc_auc_score(cp_labels, accumulative_scores, average='weighted')
+            area_under_curve = roc_auc_score(outcome_labels, accumulative_scores, average='weighted')
         else:
-            area_under_curve = roc_auc_score(cp_labels, accumulative_scores, average='weighted', sample_weight=sample_weights)
+            area_under_curve = roc_auc_score(outcome_labels, accumulative_scores, average='weighted', sample_weight=sample_weights)
     else:
         area_under_curve = 0.5
             
@@ -81,9 +81,9 @@ def evaluate(preds, labels, video_ids, aggregate_binary=False, aggregate_binary_
         # Aggregate scores
         if auto_threshold:
             if subject:
-                fpr, tpr, thresholds = roc_curve(cp_labels, accumulative_scores)
+                fpr, tpr, thresholds = roc_curve(outcome_labels, accumulative_scores)
             else:
-                fpr, tpr, thresholds = roc_curve(cp_labels, accumulative_scores, sample_weight=sample_weights)
+                fpr, tpr, thresholds = roc_curve(outcome_labels, accumulative_scores, sample_weight=sample_weights)
             best_sens_spec = 0.0
             best_threshold = None
             for inv_spec, sens, thres in zip(fpr, tpr, thresholds):
@@ -92,22 +92,22 @@ def evaluate(preds, labels, video_ids, aggregate_binary=False, aggregate_binary_
                     best_sens_spec = sens + spec
                     best_threshold = thres
             prediction_threshold = best_threshold
-        cp_predictions = (np.asarray(accumulative_scores) >= prediction_threshold).astype(int)
-        cp_labels = np.asarray(cp_labels)
+        outcome_predictions = (np.asarray(accumulative_scores) >= prediction_threshold).astype(int)
+        outcome_labels = np.asarray(outcome_labels)
 
         # Compute true/false positives and true/false negatives
 
-        ## True positive (predict CP, true label is CP)
-        tp = np.sum(np.logical_and(cp_predictions == 1, cp_labels == 1))
+        ## True positive (predict outcome, true label is outcome)
+        tp = np.sum(np.logical_and(outcome_predictions == 1, outcome_labels == 1))
 
-        ## True negative (predict not CP, true label is not CP)
-        tn = np.sum(np.logical_and(cp_predictions == 0, cp_labels == 0))
+        ## True negative (predict not outcome, true label is not outcome)
+        tn = np.sum(np.logical_and(outcome_predictions == 0, outcome_labels == 0))
 
-        ## False positive (predict CP, true label is not CP)
-        fp = np.sum(np.logical_and(cp_predictions == 1, cp_labels == 0))
+        ## False positive (predict outcome, true label is not outcome)
+        fp = np.sum(np.logical_and(outcome_predictions == 1, outcome_labels == 0))
 
-        ## False negative (predict not CP, true label is CP)
-        fn = np.sum(np.logical_and(cp_predictions == 0, cp_labels == 1))
+        ## False negative (predict not outcome, true label is outcome)
+        fn = np.sum(np.logical_and(outcome_predictions == 0, outcome_labels == 1))
 
         ## Accuracy
         accuracy = (tp + tn) / (tp + tn + fp + fn)
