@@ -264,7 +264,7 @@ if __name__ ==  '__main__':
     """ Initialize data """
 
     # Process coordinate files and outcomes (assuming raw folder exists with one coordinate CSV and associated row in outcome CSV per individual)
-    process.process(project_dir, processed_data_dir, test_size=test_size, crossval_folds=crossval_folds, num_dimensions=input_dimensions, num_joints=input_spatial_resolution, thorax_index=thorax_index, pelvis_index=pelvis_index, raw_frames_per_second=raw_frames_per_second, processed_frames_per_second=processed_frames_per_second, butterworth=butterworth, butterworth_order=butterworth_order)
+    process.process(project_dir, processed_data_dir, test_size=test_size, crossval_folds=crossval_folds, num_dimensions=input_dimensions, num_joints=input_spatial_resolution, body_parts=body_parts, thorax_index=thorax_index, pelvis_index=pelvis_index, raw_frames_per_second=raw_frames_per_second, processed_frames_per_second=processed_frames_per_second, butterworth=butterworth, butterworth_order=butterworth_order)
 
 
     """ Neural architecture search """
