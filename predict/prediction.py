@@ -488,10 +488,10 @@ def predict(coords_dir, coords_path):
         csv_file.flush()
         csv_file.close()
     
-    # Create and store CAM visualization
+    # Create and store CAM and visualization
     if visualize:
         
-        # Initialize visualization
+        # Initialize CAM visualization
         location = np.expand_dims(np.expand_dims(np.swapaxes(np.asarray(sample_coords), 0, 1), 1), -1)
         location[1,...] = 1.0 - location[1,...]
         location[0,...] *= 2000
@@ -520,7 +520,18 @@ def predict(coords_dir, coords_path):
         accumulative_ensemble_combined_cams_body_parts = np.median(ensemble_combined_cams_body_parts, axis=0)
         accumulative_ensemble_combined_cams_body_parts = np.expand_dims(np.expand_dims(accumulative_ensemble_combined_cams_body_parts, 0), -1)
     
-        # Store visualization
+        # Store CAM results in CSV
+        csv_path = os.path.join(results_dir, '{0}_cam.csv'.format(os.path.basename(coords_path).split('orgcoords_')[1].split('.csv')[0]))
+        csv_file = open(csv_path, 'w')
+        headers = body_parts
+        writer = csv.DictWriter(csv_file, fieldnames=headers)
+        writer.writeheader() 
+        cam_results = {body_parts[n]: accumulative_ensemble_combined_cams_body_parts[0,n,0] for n in range(V)}
+        writer.writerow(cam_results)
+        csv_file.flush()
+        csv_file.close()
+    
+        # Store CAM visualization
         plt.figure()
         plt.ion()
         plt.cla()
