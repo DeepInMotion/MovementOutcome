@@ -81,7 +81,7 @@ def generate_datasets(raw_dir, raw_coords_dir, raw_outcomes_file, test_size, cro
     copy_coords_files(test_negative_individuals, raw_coords_dir, os.path.join(raw_dir, 'test', 'negative'))
     
     
-def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, thorax_index=8, pelvis_index=12, raw_frames_per_second=30.0, processed_frames_per_second=30.0, butterworth=False, butterworth_order=8):
+def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, body_parts, thorax_index=8, pelvis_index=12, raw_frames_per_second=30.0, processed_frames_per_second=30.0, butterworth=False, butterworth_order=8):
     
     # Make skeleton sequences per dataset
     datasets = ['train{0}'.format(n) for n in range(1, crossval_folds+1)] + ['val{0}'.format(n) for n in range(1, crossval_folds+1)] + ['test']
@@ -126,7 +126,7 @@ def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, n
             for row in reader:
                 coords_frame = []
                 for body_part_col in row.keys():
-                    if not body_part_col == 'frame' and body_part_col.endswith('_x'):
+                    if not body_part_col == 'frame' and body_part_col.endswith('_x') and body_part_col[:-2] in body_parts:
                         body_part_x = row[body_part_col]
                         body_part_y = row[body_part_col[:-2] + "_y"]
                         coords_frame.append([body_part_x, body_part_y])
@@ -239,7 +239,7 @@ def perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, n
         np.save(labels_processed_path, np.asarray(individual_labels))
                         
             
-def process(project_dir, processed_data_dir, test_size, crossval_folds, num_dimensions, num_joints, thorax_index=8, pelvis_index=12, raw_frames_per_second=30.0, processed_frames_per_second=30.0, butterworth=False, butterworth_order=8):
+def process(project_dir, processed_data_dir, test_size, crossval_folds, num_dimensions, num_joints, body_parts, thorax_index=8, pelvis_index=12, raw_frames_per_second=30.0, processed_frames_per_second=30.0, butterworth=False, butterworth_order=8):
     print('\n============================================================================================================================================\n')
     print('PROCESSING DATA\n')
     
@@ -261,6 +261,6 @@ def process(project_dir, processed_data_dir, test_size, crossval_folds, num_dime
         
         # Create processed skeleton sequences with associated ids and labels
         print('\n- Generating skeleton sequences with ids and labels')
-        perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, thorax_index, pelvis_index, raw_frames_per_second, processed_frames_per_second, butterworth, butterworth_order) 
+        perform_processing(raw_dir, processed_dir, crossval_folds, num_dimensions, num_joints, body_parts, thorax_index, pelvis_index, raw_frames_per_second, processed_frames_per_second, butterworth, butterworth_order) 
         print('- Skeleton sequences generated')
         print('\n============================================================================================================================================\n')

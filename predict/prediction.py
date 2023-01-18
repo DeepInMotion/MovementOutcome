@@ -205,7 +205,7 @@ def predict(coords_dir, coords_path):
     for row in reader:
         coords_frame = []
         for body_part_col in row.keys():
-            if not body_part_col == 'frame' and body_part_col.endswith('_x'):
+            if not body_part_col == 'frame' and body_part_col.endswith('_x') and body_part_col[:-2] in body_parts:
                 body_part_x = row[body_part_col]
                 body_part_y = row[body_part_col[:-2] + "_y"]
                 coords_frame.append([body_part_x, body_part_y])
