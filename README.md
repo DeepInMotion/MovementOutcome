@@ -87,3 +87,5 @@ To employ a cross-validated GCN obtained by NAS for prediction of movement outco
 5. The results of the prediction model are stored in a folder with the same name as the folder of the coordinate files in the specific search folder within *'searches'* (e.g., *'im2021/searches/21092022 1522 IM2021/coords'*).
 - Predicted risk of outcome, classification, and associated classification certainty of each individual are stored in CSV file (e.g., *'im2021/searches/21092022 1522 IM2021/coords/individual1_results.png'*).
 - Class activation map visualizations of body part contributions towards risk of movement outcome for the individual are stored as PNG file (e.g., *'im2021/searches/21092022 1522 IM2021/coords/individual1_cam.png'*).
+
+**Tip: The ensemble script (i.e., *'predict/prediction_ensemble.py'*) performs prediction by combining the outputs of different GCNs obtained from seperate searches.**
