@@ -193,7 +193,7 @@ def predict(coords_dir, coords_path):
     
     search_dir = os.path.join(project_dir, 'searches', search_name)
     experiments_dir = os.path.join(search_dir, 'experiments')
-    results_dir = os.path.join(search_dir, coords_dir.split('/')[-1])
+    results_dir = os.path.join(search_dir, os.path.dirname(coords_dir))
     os.makedirs(results_dir, exist_ok=True)
     
     """ Obtain skeleton sequence """
@@ -478,7 +478,7 @@ def predict(coords_dir, coords_path):
             certain = False
            
         # Store results in CSV
-        csv_path = os.path.join(results_dir, '{0}_results.csv'.format(coords_path.split('/')[-1].split('orgcoords_')[1].split('.csv')[0]))
+        csv_path = os.path.join(results_dir, '{0}_results.csv'.format(os.path.basename(coords_path).split('orgcoords_')[1].split('.csv')[0]))
         csv_file = open(csv_path, 'w')
         headers = ['risk', 'prediction_threshold', 'positive_classification', 'certain_classification']
         writer = csv.DictWriter(csv_file, fieldnames=headers)
@@ -540,7 +540,7 @@ def predict(coords_dir, coords_path):
             plt.plot([x[v], x[k]], [y[v], y[k]], '-o', c=np.array([0.1,0.1,0.1]), linewidth=1.0, markersize=0)
         plt.scatter(x, y, marker='o', c=c, s=100)
         plt.ioff()
-        plt.savefig(os.path.join(results_dir, '{0}_cam.png'.format(coords_path.split('/')[-1].split('orgcoords_')[1].split('.csv')[0])), format='png')
+        plt.savefig(os.path.join(results_dir, '{0}_cam.png'.format(os.path.basename(coords_path).split('orgcoords_')[1].split('.csv')[0])), format='png')
 
         
 if __name__ == '__main__':
