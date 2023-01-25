@@ -23,21 +23,6 @@ def random_start(sample_data, window_size, roll_sequence=False, sequence_part=1,
     return sample_data[:, window_start:window_start+window_size, :]
 
 
-#  We calculate the vertical line (spine) of the body by finding the normal vector from the thorax onto the pelvis
-#  This is used to find the degrees to rotate the body into a vertical position
-def get_rotation_angle(sample_data, graph):
-    thorax_index, pelvis_index = graph.get_thorax_pelvis_indices()
-    thorax = sample_data[:, 0, thorax_index]
-    pelvis = sample_data[:, 0, pelvis_index]
-
-    spine = pelvis - thorax
-    len_spine = np.sqrt(spine[0]**2 + spine[1]**2)
-    rads_from_x_axis = np.arccos(spine[0]/len_spine) if len_spine > 0 else 0
-    rads_to_rotate = -((np.pi / 2) + rads_from_x_axis) + np.pi
-    angle_to_rotate = math.degrees(rads_to_rotate)
-    return angle_to_rotate
-
-
 def rotate(sample_data, angle):
     C, T, V = sample_data.shape
     rad = math.radians(-angle)
