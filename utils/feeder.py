@@ -8,7 +8,7 @@ import os,sys,inspect
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
-from utils.helpers import random_start, random_perturbation, create_bone_motion_features, rotate, get_rotation_angle
+from utils.helpers import random_start, random_perturbation, create_bone_motion_features
 
 class TrainFeeder(Dataset):
     def __init__(self, processed_data_dir, dataset, graph, 
@@ -16,7 +16,7 @@ class TrainFeeder(Dataset):
                  random_perturbation=False, angle_candidate=[i for i in range(-45, 45+1)], 
                  scale_candidate=[i/100 for i in range(int(0.7*100), int(1.3*100)+1)], 
                  translation_candidate=[i/100 for i in range(int(-0.3*100), int(0.3*100)+1)], roll_sequence=False, 
-                 standardize_rotation=True, use_mmap=True, absolute=True, relative=False, motion1=False, motion2=False, 
+                 use_mmap=True, absolute=True, relative=False, motion1=False, motion2=False, 
                  bone=False, bone_angle=False, debug=False):
         """ Feeder of training for skeleton-based action recognition with the In-Motion dataset
         Arguments:
@@ -32,7 +32,6 @@ class TrainFeeder(Dataset):
             scale_candidate: Scaling candidates for augmentation
             translation_candidate: Translation candidates for augmentation
             roll_sequence: If true, repeat sequence until maximum T in dataset is reached
-            standardize_rotation: If true, rotate sequences to start with a vertical body position
             use_mmap: If true, use mmap mode to load data, which can save the running memory
             absolute: If true, include absolute coordinates in input tensor
             relative: If true, include relative coordinates with respect to center joint in input tensor
@@ -53,7 +52,6 @@ class TrainFeeder(Dataset):
         self.scale_candidate = scale_candidate
         self.translation_candidate = translation_candidate
         self.roll_sequence = roll_sequence
-        self.standardize_rotation = standardize_rotation
         self.use_mmap = use_mmap
         self.debug_slice = 100 if debug else None
         
@@ -166,11 +164,6 @@ class TrainFeeder(Dataset):
             window_start = (sequence_part - 1) * part_size if (sequence_part - 1) * part_size < (sequence_length - self.input_temporal_resolution) else sequence_length - self.input_temporal_resolution
             sample_data = sample_data[:, window_start:window_start+self.input_temporal_resolution, :]
 
-        # Rotate the body to start the sequence with a vertical spine
-        if self.standardize_rotation:
-            angle = get_rotation_angle(sample_data, self.graph)
-            sample_data = rotate(sample_data, angle)
-
         # Perform data-augmentation by scaling, rotating and transforming the sequence        
         if self.random_perturbation:
             sample_data = random_perturbation(sample_data, angle_candidate=self.angle_candidate, scale_candidate=self.scale_candidate, translation_candidate=self.translation_candidate)
@@ -205,7 +198,7 @@ class EvalFeeder(Dataset):
     def __init__(self, processed_data_dir, dataset, graph, input_temporal_resolution=150, 
                  parts_distance=150, random_perturbation=False, angle_candidate=[i for i in range(-45, 45+1)], 
                  scale_candidate=[i/100 for i in range(int(0.7*100), int(1.3*100)+1)], 
-                 translation_candidate=[i/100 for i in range(int(-0.3*100))], standardize_rotation=True,
+                 translation_candidate=[i/100 for i in range(int(-0.3*100))],
                  use_mmap=True, absolute=True, relative=False, motion1=False, motion2=False, bone=False,
                  bone_angle=False, debug=False):
         """ Feeder of evaluation for skeleton-based action recognition with the In-Motion dataset
@@ -219,7 +212,6 @@ class EvalFeeder(Dataset):
             angle_candidate: Degree candidates for augmentation
             scale_candidate: Scaling candidates for augmentation
             translation_candidate: Translation candidates for augmentation
-            standardize_rotation: If true, rotate sequences to start with a vertical body position
             use_mmap: If true, use mmap mode to load data, which can save the running memory
             absolute: If true, include absolute coordinates in input tensor
             relative: If true, include relative coordinates with respect to center joint in input tensor
@@ -237,7 +229,6 @@ class EvalFeeder(Dataset):
         self.angle_candidate = angle_candidate
         self.scale_candidate = scale_candidate
         self.translation_candidate = translation_candidate
-        self.standardize_rotation = standardize_rotation
         self.use_mmap = use_mmap
         self.debug_slice = 100 if debug else None
 
@@ -315,12 +306,6 @@ class EvalFeeder(Dataset):
         sample_data = np.array(self.data[index])
         sample_id = self.ids[index]
         sample_label = self.label[index]
-
-        # Augment sample sequence part
-        # Rotate the body to start the sequence with a vertical spine
-        if self.standardize_rotation:
-            angle = get_rotation_angle(sample_data, self.graph)
-            sample_data = rotate(sample_data, angle)
 
         # Perform data-augmentation by scaling, rotating and transforming the sequence
         if self.random_perturbation:
