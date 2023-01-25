@@ -103,7 +103,7 @@ class Operator():
 
         # Initialize feeder
         self.test_dataset = 'test'
-        test_feeder = feeder.EvalFeeder(graph=self.graph_input, random_perturbation=False, standardize_rotation=self.hyperparameters['augmentation']['standardize_rotation'], input_temporal_resolution=self.hyperparameters['model']['input_temporal_resolution'], parts_distance=self.hyperparameters['evaluation']['parts_distance'], processed_data_dir=self.processed_data_dir, dataset=self.test_dataset, absolute=self.hyperparameters['features']['absolute'], relative=self.hyperparameters['features']['relative'], motion1=self.hyperparameters['features']['motion1'], motion2=self.hyperparameters['features']['motion2'], bone=self.hyperparameters['features']['bone'], bone_angle=self.hyperparameters['features']['bone_angle'])
+        test_feeder = feeder.EvalFeeder(graph=self.graph_input, random_perturbation=False, input_temporal_resolution=self.hyperparameters['model']['input_temporal_resolution'], parts_distance=self.hyperparameters['evaluation']['parts_distance'], processed_data_dir=self.processed_data_dir, dataset=self.test_dataset, absolute=self.hyperparameters['features']['absolute'], relative=self.hyperparameters['features']['relative'], motion1=self.hyperparameters['features']['motion1'], motion2=self.hyperparameters['features']['motion2'], bone=self.hyperparameters['features']['bone'], bone_angle=self.hyperparameters['features']['bone_angle'])
         
         # Determine number of input channels
         self.input_channels = test_feeder.get_channels()
