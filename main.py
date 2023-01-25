@@ -88,7 +88,6 @@ if __name__ ==  '__main__':
     min_scale_candidate = 0.7
     max_scale_candidate = 1.3
     max_translation_candidate = 0.3
-    standardize_rotation = True
     roll_sequence = True
 
     #### Step 13: Set evaluation options (e.g., test set size (defaults to 25% of all individuals), mini batch size, number of frames between each sample and aggregation scheme)
@@ -223,7 +222,6 @@ if __name__ ==  '__main__':
                                 'min_scale_candidate': min_scale_candidate,
                                 'max_scale_candidate': max_scale_candidate,
                                 'max_translation_candidate': max_translation_candidate,
-                                'standardize_rotation': standardize_rotation,
                                 'roll_sequence': roll_sequence},
                       'evaluation': {'test_size': test_size,
                                 'evaluation_batch_size': evaluation_batch_size,
