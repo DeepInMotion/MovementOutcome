@@ -18,11 +18,10 @@ def init_seed(seed=1):
     
 
 class EvalFeeder(Dataset):
-    def __init__(self, data, graph, input_temporal_resolution=150, parts_distance=75, standardize_rotation=True, absolute=True, relative=False, motion1=False, motion2=False, bone=False, bone_angle=False):
+    def __init__(self, data, graph, input_temporal_resolution=150, parts_distance=75, absolute=True, relative=False, motion1=False, motion2=False, bone=False, bone_angle=False):
         self.graph = graph
         self.input_temporal_resolution = input_temporal_resolution
         self.parts_distance = parts_distance
-        self.standardize_rotation = standardize_rotation
 
         self.init_data = data
         self.load_data()
@@ -35,10 +34,8 @@ class EvalFeeder(Dataset):
         self.bone = bone
         self.bone_angle = bone_angle
         
-        from utils.helpers import create_bone_motion_features, rotate, get_rotation_angle
+        from utils.helpers import create_bone_motion_features
         self.create_bone_motion_features = create_bone_motion_features
-        self.rotate = rotate
-        self.get_rotation_angle = get_rotation_angle
 
     def load_data(self):
 
@@ -73,11 +70,6 @@ class EvalFeeder(Dataset):
         
         # Fetch part information
         sample_data = np.array(self.data[index])
-
-        # Rotate the body to start the sequence with a vertical spine
-        if self.standardize_rotation:
-            angle = self.get_rotation_angle(sample_data, self.graph)
-            sample_data = self.rotate(sample_data, angle)
 
         C, T, V = sample_data.shape
         sample_data = np.reshape(sample_data, (C, T, V, 1))
@@ -169,7 +161,6 @@ def predict(coords_dir, coords_path):
     median_aggregation = True
     prediction_threshold = 0.5
     seed = 1
-    standardize_rotation = True
     
     #### Step 11: Set hyperparameters for cross-validation
     crossval_folds = 7
@@ -341,7 +332,7 @@ def predict(coords_dir, coords_path):
                 graph_main = graph.Graph(strategy=labeling_mode[1], body_parts=body_parts, neighbor_link=neighbor_link, center=center, bone_conns=bone_conns, thorax_index=thorax_index, pelvis_index=pelvis_index, disentangled_num_scales=disentangled_num_scales[1], use_mask=use_mask)
 
             # Initialize feeder
-            individual_feeder = EvalFeeder(data=individual_sequence, graph=graph_input, standardize_rotation=standardize_rotation, input_temporal_resolution=input_temporal_resolution, parts_distance=parts_distance, absolute=absolute, relative=relative, motion1=motion1, motion2=motion2, bone=bone, bone_angle=bone_angle)
+            individual_feeder = EvalFeeder(data=individual_sequence, graph=graph_input, input_temporal_resolution=input_temporal_resolution, parts_distance=parts_distance, absolute=absolute, relative=relative, motion1=motion1, motion2=motion2, bone=bone, bone_angle=bone_angle)
 
             # Obtain data loader
             individual_dataloader = torch.utils.data.DataLoader(dataset=individual_feeder, batch_size=evaluation_batch_size, shuffle=False, num_workers=num_workers, drop_last=False, worker_init_fn=init_seed(seed))
