@@ -59,7 +59,7 @@ if __name__ ==  '__main__':
     #### Step 8: Set frames per second of raw coordinate files and processed skeleton sequences and Butterworth filter options for preprocessing.
     raw_frames_per_second = 30.0 # <-- Assign (i.e., assumes consistent frame rate across coordinate files)
     processed_frames_per_second = 30.0 # <-- Assign (i.e., number of time steps per second in skeleton sequences)
-    butterworth = False # <-- Assign [True, False] for Butterworth filter as part of preprocessing
+    butterworth = True # <-- Assign [True, False] for Butterworth filter as part of preprocessing
     butterworth_order = 8 # <-- Assign order of Butterworth filter
 
     #### Step 9: Set hyperparameters for training and validation (e.g., mini batch size and loss filter size)
